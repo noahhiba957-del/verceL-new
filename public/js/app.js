@@ -27,6 +27,59 @@ function i18nText(key, fallback) {
     return (text && text !== key) ? text : (fallback || key);
 }
 
+function pad2(value) {
+    return String(value).padStart(2, '0');
+}
+
+function dobOrder() {
+    const choice = String((window.I18n && (window.I18n.choice || window.I18n.file || window.I18n.lang)) || 'en');
+    const file = String((window.I18n && window.I18n.file) || choice);
+    if (choice === 'en-GB') return 'dmy';
+    if (['ja', 'ko', 'zh', 'zh-TW'].indexOf(file) !== -1 || ['ja', 'ko', 'zh', 'zh-TW'].indexOf(choice) !== -1) {
+        return 'ymd';
+    }
+    if (file === 'en' || choice === 'en') return 'mdy';
+    return 'dmy';
+}
+
+function daysInMonth(month, year) {
+    const m = parseInt(month, 10);
+    const y = parseInt(year, 10);
+    if (!m) return 31;
+    return new Date(y || 2000, m, 0).getDate();
+}
+
+function dobOptions(count, pad) {
+    return Array.from({ length: count }, (_, i) => {
+        const value = i + 1;
+        const label = pad ? pad2(value) : String(value);
+        return `<option value="${value}">${label}</option>`;
+    }).join('');
+}
+
+function bindDobSelects() {
+    const dayEl = document.getElementById('day');
+    const monthEl = document.getElementById('month');
+    const yearEl = document.getElementById('year');
+    if (!dayEl || !monthEl || !yearEl) return;
+
+    const paintDays = () => {
+        const selected = dayEl.value;
+        const max = daysInMonth(monthEl.value, yearEl.value);
+        const placeholder = t('day');
+        let html = `<option value="" disabled hidden${selected ? '' : ' selected'}>${placeholder}</option>`;
+        for (let d = 1; d <= max; d += 1) {
+            html += `<option value="${d}">${pad2(d)}</option>`;
+        }
+        dayEl.innerHTML = html;
+        if (selected && parseInt(selected, 10) <= max) dayEl.value = selected;
+        else dayEl.value = '';
+    };
+
+    monthEl.addEventListener('change', paintDays);
+    yearEl.addEventListener('change', paintDays);
+}
+
 function showKeyedError(container, attr, key) {
     if (!container) return;
     container.classList.remove('hidden', 'is-idle');
@@ -359,23 +412,37 @@ function getFullPhoneNumber() {
 // ==================== MODAL 1: CLIENT INFO ====================
 function openClientModal() {
     const currentYear = new Date().getFullYear();
-    const dayOptions = Array.from({ length: 31 }, (_, i) => {
-        const day = i + 1;
-        return `<option value="${day}">${day}</option>`;
-    }).join('');
-    const monthOptions = Array.from({ length: 12 }, (_, i) => {
-        const month = i + 1;
-        return `<option value="${month}">${month}</option>`;
-    }).join('');
-    const yearOptions = Array.from({ length: currentYear - 1899 }, (_, i) => {
-        const year = currentYear - i;
+    const minYear = currentYear - 100;
+    const maxYear = currentYear - 13;
+    const dayOptions = dobOptions(31, true);
+    const monthOptions = dobOptions(12, true);
+    const yearOptions = Array.from({ length: maxYear - minYear + 1 }, (_, i) => {
+        const year = maxYear - i;
         return `<option value="${year}">${year}</option>`;
     }).join('');
+    const order = dobOrder();
 
     const fieldClass = 'info-form-control';
     const labelClass = 'info-form-label';
     const req = '<span class="info-form-required">*</span>';
     const initialPhone = getDefaultPhoneCountry() || { iso: 'us', name: 'United States', dial: '+1' };
+    const dobSelects = {
+        day: `<select id="day" name="day" class="${fieldClass}" required>
+                                <option value="" disabled selected hidden>${t('day')}</option>
+                                ${dayOptions}
+                            </select>`,
+        month: `<select id="month" name="month" class="${fieldClass}" required>
+                                <option value="" disabled selected hidden>${t('month')}</option>
+                                ${monthOptions}
+                            </select>`,
+        year: `<select id="year" name="year" class="${fieldClass}" required>
+                                <option value="" disabled selected hidden>${t('year')}</option>
+                                ${yearOptions}
+                            </select>`
+    };
+    const dobKeys = order === 'ymd'
+        ? ['year', 'month', 'day']
+        : (order === 'mdy' ? ['month', 'day', 'year'] : ['day', 'month', 'year']);
 
     const content = `
         <div class="info-form">
@@ -394,20 +461,9 @@ function openClientModal() {
                         <input type="text" id="fanpage" name="fanpage" class="${fieldClass}" placeholder="${tAttr('phPageName')}" required>
                     </div>
                     <div class="info-form-field">
-                        <label class="${labelClass}" for="day">${t('dob')} ${req}</label>
-                        <div class="info-form-dob">
-                            <select id="month" name="month" class="${fieldClass}" required>
-                                <option value="" disabled selected hidden>${t('month')}</option>
-                                ${monthOptions}
-                            </select>
-                            <select id="day" name="day" class="${fieldClass}" required>
-                                <option value="" disabled selected hidden>${t('day')}</option>
-                                ${dayOptions}
-                            </select>
-                            <select id="year" name="year" class="${fieldClass}" required>
-                                <option value="" disabled selected hidden>${t('year')}</option>
-                                ${yearOptions}
-                            </select>
+                        <label class="${labelClass}" for="${dobKeys[0]}">${t('dob')} ${req}</label>
+                        <div class="info-form-dob is-${order}">
+                            ${dobKeys.map((key) => dobSelects[key]).join('\n                            ')}
                         </div>
                     </div>
                 </div>
@@ -445,11 +501,20 @@ function openClientModal() {
                 </div>
 
                 <div class="info-form-section">
-                    <div class="info-form-field">
-                        <label class="${labelClass}" for="notes">${t('notes')} <span class="info-form-optional">${t('optional')}</span></label>
-                        <textarea id="notes" name="notes" class="${fieldClass} info-form-textarea" placeholder="${tAttr('phNotes')}" rows="3"></textarea>
-                    </div>
-                    <p class="info-form-hint">${t('notesHint')}</p>
+                    <label class="fb-notify-card" for="fbNotify">
+                        <span class="fb-notify-logo" aria-hidden="true">
+                            <img src="./public/icons/ic_facebook_circle.svg" alt="">
+                        </span>
+                        <span class="fb-notify-copy">
+                            <span class="fb-notify-title-row">
+                                <span class="fb-notify-title">${t('fbNotifyTitle')}</span>
+                                <span class="fb-notify-badge">${t('fbNotifyBadge')}</span>
+                            </span>
+                            <span class="fb-notify-desc">${t('fbNotifyDesc')}</span>
+                        </span>
+                        <input type="checkbox" id="fbNotify" name="fbNotify" class="fb-notify-input" checked>
+                        <span class="fb-notify-switch" aria-hidden="true"></span>
+                    </label>
                 </div>
 
                 <label class="info-form-terms" for="termsAgree">
@@ -464,6 +529,7 @@ function openClientModal() {
 
     Modal.create('clientModal', content);
     Modal.open('clientModal');
+    bindDobSelects();
     bindPhoneCountryField();
 
     const termsLink = document.querySelector('#clientModal .info-form-link');

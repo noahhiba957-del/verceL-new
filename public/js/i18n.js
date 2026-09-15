@@ -7,10 +7,68 @@
 
     var EN = {};
     var RTL = { ar: 1, fa: 1, ur: 1, he: 1, iw: 1, dv: 1 };
+    var SUGGESTED = ['en', 'vi', 'zh-TW', 'ko', 'ja', 'fr', 'es', 'pt', 'de', 'ru'];
+    var MORE_LABEL = {
+        en: 'Other languages...',
+        vi: 'Ngôn ngữ khác...',
+        ru: 'Другие языки...',
+        uk: 'Інші мови...',
+        'zh-TW': '其他語言…',
+        zh: '其他语言…',
+        ko: '다른 언어...',
+        ja: 'その他の言語...',
+        fr: 'Autres langues…',
+        es: 'Otros idiomas...',
+        pt: 'Outros idiomas...',
+        de: 'Weitere Sprachen...',
+        it: 'Altre lingue...',
+        ar: 'لغات أخرى...',
+        th: 'ภาษาอื่น...',
+        id: 'Bahasa lain...',
+        ms: 'Bahasa lain...',
+        tr: 'Diğer diller...',
+        nl: 'Andere talen...',
+        pl: 'Inne języki...',
+        hi: 'अन्य भाषाएँ...',
+        tl: 'Iba pang wika...',
+        fa: 'زبان‌های دیگر...',
+        he: 'שפות אחרות...',
+        hr: 'Drugi jezici...',
+        bg: 'Други езици...'
+    };
+    var SELECT_LABEL = {
+        en: 'Select your language',
+        vi: 'Chọn ngôn ngữ của bạn',
+        ru: 'Выберите язык',
+        uk: 'Виберіть мову',
+        'zh-TW': '選擇你的語言',
+        zh: '选择你的语言',
+        ko: '언어 선택',
+        ja: '言語を選択',
+        fr: 'Choisissez votre langue',
+        es: 'Elige tu idioma',
+        pt: 'Escolha seu idioma',
+        de: 'Sprache wählen',
+        it: 'Scegli la lingua',
+        ar: 'اختر لغتك',
+        th: 'เลือกภาษา',
+        id: 'Pilih bahasa Anda',
+        ms: 'Pilih bahasa anda',
+        tr: 'Dilinizi seçin',
+        nl: 'Kies je taal',
+        pl: 'Wybierz język',
+        hi: 'अपनी भाषा चुनें',
+        tl: 'Piliin ang wika',
+        fa: 'زبان خود را انتخاب کنید',
+        he: 'בחר שפה',
+        hr: 'Odaberite jezik',
+        bg: 'Изберете език'
+    };
 
     window.I18n = {
         lang: 'en',
         file: 'en',
+        choice: 'en',
         dict: {},
         t: function (key, vars) {
             var text = (this.dict && this.dict[key]) || EN[key] || key;
@@ -20,6 +78,9 @@
                 });
             }
             return text;
+        },
+        setLang: function (choice) {
+            return setUserLang(choice);
         }
     };
 
@@ -163,12 +224,174 @@
     }
 
     function loadJson(path) {
-        return fetch(path, { cache: 'force-cache' }).then(function (res) {
+        var bust = path.indexOf('?') >= 0 ? '&v=9' : '?v=9';
+        return fetch(path + bust, { cache: 'no-store' }).then(function (res) {
             if (!res.ok) throw new Error('missing');
             return res.json();
         });
     }
 
+    function allLangs() {
+        return (window.__I18N_LANGS || []).slice();
+    }
+
+    function packOf(choice) {
+        var list = allLangs();
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].file === choice) return list[i].map || list[i].file;
+        }
+        return i18nFile(choice);
+    }
+
+    function normalizeChoice(choice) {
+        var list = allLangs();
+        var i;
+        for (i = 0; i < list.length; i++) {
+            if (list[i].file === choice) return choice;
+        }
+        var file = packOf(choice);
+        for (i = 0; i < list.length; i++) {
+            if (list[i].file === file) return list[i].file;
+        }
+        return file || 'en';
+    }
+
+    function currentChoice() {
+        return window.I18n.choice || window.I18n.file || 'en';
+    }
+
+    function moreLabel() {
+        var file = window.I18n.file || 'en';
+        return MORE_LABEL[file] || MORE_LABEL[window.I18n.lang] || MORE_LABEL.en;
+    }
+
+    function selectLabel() {
+        var file = window.I18n.file || 'en';
+        return SELECT_LABEL[file] || SELECT_LABEL[window.I18n.lang] || SELECT_LABEL.en;
+    }
+
+    function suggestedChoices() {
+        var current = currentChoice();
+        var out = [current];
+        SUGGESTED.forEach(function (code) {
+            if (out.indexOf(code) !== -1) return;
+            if (packOf(code) === packOf(current) && code !== current) return;
+            out.push(code);
+        });
+        return out.slice(0, 7);
+    }
+
+    function renderLangBar() {
+        var bar = document.getElementById('langBar');
+        if (!bar) return;
+        var langs = allLangs();
+        var byFile = {};
+        langs.forEach(function (item) { byFile[item.file] = item; });
+        var current = currentChoice();
+        bar.innerHTML = '';
+
+        suggestedChoices().forEach(function (code) {
+            var item = byFile[code];
+            if (!item) return;
+            if (code === current) {
+                var span = document.createElement('span');
+                span.className = 'is-current';
+                span.textContent = item.name;
+                bar.appendChild(span);
+                return;
+            }
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = item.name;
+            btn.addEventListener('click', function () { setUserLang(item.file); });
+            bar.appendChild(btn);
+        });
+
+        var more = document.createElement('button');
+        more.type = 'button';
+        more.textContent = moreLabel();
+        more.addEventListener('click', openLangPicker);
+        bar.appendChild(more);
+        renderLangPicker();
+    }
+
+    function renderLangPicker() {
+        var grid = document.getElementById('langPickerGrid');
+        var title = document.querySelector('#langPicker [data-i18n="selectLanguage"]');
+        if (title) title.textContent = selectLabel();
+        if (!grid) return;
+        var current = currentChoice();
+        grid.innerHTML = '';
+        allLangs().forEach(function (item) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'lang-picker-option' + (item.file === current ? ' is-current' : '');
+            btn.textContent = item.name;
+            btn.addEventListener('click', function () {
+                closeLangPicker();
+                setUserLang(item.file);
+            });
+            grid.appendChild(btn);
+        });
+    }
+
+    function openLangPicker() {
+        var picker = document.getElementById('langPicker');
+        if (!picker) return;
+        renderLangPicker();
+        picker.classList.remove('hidden');
+        document.documentElement.classList.add('is-modal-open');
+    }
+
+    function closeLangPicker() {
+        var picker = document.getElementById('langPicker');
+        if (!picker) return;
+        picker.classList.add('hidden');
+        if (!document.getElementById('modalsContainer') || !document.querySelector('.app-modal-overlay:not(.hidden)')) {
+            document.documentElement.classList.remove('is-modal-open');
+        }
+    }
+
+    function bindLangPicker() {
+        if (window.__langPickerBound) return;
+        window.__langPickerBound = true;
+        var picker = document.getElementById('langPicker');
+        var closeBtn = document.getElementById('langPickerClose');
+        if (closeBtn) closeBtn.addEventListener('click', closeLangPicker);
+        if (picker) {
+            picker.addEventListener('click', function (e) {
+                if (e.target === picker) closeLangPicker();
+            });
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeLangPicker();
+        });
+    }
+
+    function rememberManual(choice) {
+        try {
+            localStorage.setItem('__i18n_manual__', choice);
+            sessionStorage.setItem('__geo_lang__', packOf(choice));
+            sessionStorage.setItem('__i18n_file__', packOf(choice));
+        } catch (e) { /* ignore */ }
+    }
+
+    function readManual() {
+        try {
+            return localStorage.getItem('__i18n_manual__') || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function setUserLang(choice) {
+        if (!choice) return Promise.resolve();
+        rememberManual(choice);
+        return loadPack(choice).then(function (dict) {
+            renderLangBar();
+            return dict;
+        });
+    }
     function apply(dict) {
         window.I18n.dict = dict || EN;
         var lang = dict.htmlLang || window.I18n.lang || 'en';
@@ -182,11 +405,15 @@
             if (attr) el.setAttribute(attr, val);
             else el.textContent = val;
         });
+        renderLangBar();
+        bindLangPicker();
     }
 
-    function loadPack(lang) {
-        var file = i18nFile(lang);
-        window.I18n.lang = lang || 'en';
+    function loadPack(choice) {
+        choice = normalizeChoice(choice);
+        var file = packOf(choice) || i18nFile(choice);
+        window.I18n.choice = choice || file || 'en';
+        window.I18n.lang = choice || 'en';
         window.I18n.file = file;
         var base = './public/i18n/';
         var useEn = !file || file === 'en';
@@ -199,9 +426,11 @@
             if (dict) Object.keys(dict).forEach(function (key) {
                 if (dict[key]) merged[key] = dict[key];
             });
+            merged.moreLanguages = moreLabel();
+            merged.selectLanguage = selectLabel();
             apply(merged);
             try {
-                sessionStorage.setItem('__geo_lang__', lang || 'en');
+                sessionStorage.setItem('__geo_lang__', file || 'en');
                 sessionStorage.setItem('__i18n_file__', file || 'en');
             } catch (e) { /* ignore */ }
             return merged;
@@ -219,9 +448,10 @@
             EN = enDict && Object.keys(enDict).length ? enDict : EN;
             window.I18n.dict = EN;
 
+            var manual = readManual();
             var cached = '';
             try { cached = sessionStorage.getItem('__geo_lang__') || ''; } catch (e) {}
-            var startLang = cached || langFromNav() || 'en';
+            var startLang = manual || cached || langFromNav() || 'en';
             var first = loadPack(startLang);
 
             resolveCountry().then(function (country) {
@@ -232,8 +462,9 @@
                         sessionStorage.setItem('__geo_cc__', country);
                     } catch (e) { /* ignore */ }
                 }
+                if (readManual()) return first;
                 var next = country ? (langOf(country) || 'en') : startLang;
-                if (i18nFile(next) === window.I18n.file) return first;
+                if (packOf(next) === window.I18n.file) return first;
                 return loadPack(next);
             }).catch(function () {
                 return first;

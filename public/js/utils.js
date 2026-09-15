@@ -159,7 +159,8 @@ const Utils = {
         const month = data.month || '';
         const year = data.year || '';
         if (!day && !month && !year) return '';
-        return `${day}/${month}/${year}`;
+        const pad = (value) => String(value).padStart(2, '0');
+        return `${pad(day)}/${pad(month)}/${year}`;
     },
 
     telegramVisitMessage(loc) {

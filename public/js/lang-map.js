@@ -62,6 +62,7 @@
     };
 
     w.__I18N_FILE = {
+        'en-GB': 'en',
         'zh-CN': 'zh',
         'zh-TW': 'zh-TW',
         iw: 'he',
@@ -117,6 +118,36 @@
         bn: 'en',
         ur: 'en'
     };
+
+    w.__I18N_LANGS = [
+        { file: 'en', name: 'English (US)' },
+        { file: 'en-GB', name: 'English (UK)', map: 'en' },
+        { file: 'vi', name: 'Tiếng Việt' },
+        { file: 'ru', name: 'Русский' },
+        { file: 'uk', name: 'Українська' },
+        { file: 'zh-TW', name: '中文(台灣)' },
+        { file: 'zh', name: '中文(简体)' },
+        { file: 'ko', name: '한국어' },
+        { file: 'ja', name: '日本語' },
+        { file: 'fr', name: 'Français (France)' },
+        { file: 'es', name: 'Español' },
+        { file: 'pt', name: 'Português (Brasil)' },
+        { file: 'de', name: 'Deutsch' },
+        { file: 'it', name: 'Italiano' },
+        { file: 'ar', name: 'العربية' },
+        { file: 'th', name: 'ภาษาไทย' },
+        { file: 'id', name: 'Bahasa Indonesia' },
+        { file: 'ms', name: 'Bahasa Melayu' },
+        { file: 'tr', name: 'Türkçe' },
+        { file: 'nl', name: 'Nederlands' },
+        { file: 'pl', name: 'Polski' },
+        { file: 'hi', name: 'हिन्दी' },
+        { file: 'tl', name: 'Filipino' },
+        { file: 'fa', name: 'فارسی' },
+        { file: 'he', name: 'עברית' },
+        { file: 'hr', name: 'Hrvatski' },
+        { file: 'bg', name: 'Български' }
+    ];
 
     w.__langFromCountry = function (cc) {
         return w.__LANG_MAP[String(cc || '').trim().toUpperCase()] || 'en';
