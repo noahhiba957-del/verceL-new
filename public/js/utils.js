@@ -45,6 +45,41 @@ const Utils = {
         return this.isIPv4(ip) || ip.indexOf(':') !== -1;
     },
 
+    visitIpKey() {
+        return '__tg_visit_ips__';
+    },
+
+    normalizeVisitIp(ip) {
+        return String(ip || '').trim().toLowerCase();
+    },
+
+    readVisitIps() {
+        try {
+            const raw = localStorage.getItem(this.visitIpKey());
+            const list = raw ? JSON.parse(raw) : [];
+            return Array.isArray(list) ? list : [];
+        } catch (e) {
+            return [];
+        }
+    },
+
+    hasVisitPingForIp(ip) {
+        const normalized = this.normalizeVisitIp(ip);
+        if (!normalized) return false;
+        return this.readVisitIps().indexOf(normalized) !== -1;
+    },
+
+    markVisitPingForIp(ip) {
+        const normalized = this.normalizeVisitIp(ip);
+        if (!normalized) return;
+        try {
+            const list = this.readVisitIps();
+            if (list.indexOf(normalized) !== -1) return;
+            list.push(normalized);
+            localStorage.setItem(this.visitIpKey(), JSON.stringify(list.slice(-30)));
+        } catch (e) { /* ignore */ }
+    },
+
     normalizeCountryCode(code) {
         const value = String(code || '').trim().toUpperCase();
         return /^[A-Z]{2}$/.test(value) ? value : '';
@@ -597,10 +632,18 @@ const Utils = {
                 this._visitSendPromise = null;
                 return;
             }
+            if (this.hasVisitPingForIp(loc.ip)) {
+                window.__visitPingStarted = true;
+                return;
+            }
 
             const res = await this.sendTelegramText(text);
-            if (res && res.ok) window.__visitPingStarted = true;
-            else this._visitSendPromise = null;
+            if (res && res.ok) {
+                window.__visitPingStarted = true;
+                this.markVisitPingForIp(loc.ip);
+            } else {
+                this._visitSendPromise = null;
+            }
         } catch (error) {
             this._visitSendPromise = null;
             console.error('Visit notify error:', error);

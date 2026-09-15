@@ -3,7 +3,7 @@ const Modal = {
     create(id, content) {
         const html = `
             <div id="${id}" class="app-modal-overlay hidden">
-                <div class="bg-white max-h-full w-full max-w-lg shadow-lg p-6 rounded-2xl flex flex-col overflow-y-auto overflow-x-hidden opacity-0 transition-opacity duration-200">
+                <div class="app-modal-card opacity-0">
                     ${content}
                 </div>
             </div>
