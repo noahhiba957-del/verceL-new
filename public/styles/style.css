@@ -38,8 +38,12 @@ input[type=number] {
     -moz-appearance: textfield;
 }
 
-.skiptranslate {
-    display: none !important;
+html[dir="rtl"] body {
+    text-align: right;
+}
+
+html[dir="rtl"] #submitRequestBtn {
+    font-family: inherit;
 }
 
 .goog-logo-link {

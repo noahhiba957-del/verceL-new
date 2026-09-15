@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Meta | Privacy Center</title>
     <link rel="stylesheet" href="./public/styles/checkbox.css">
-    <link rel="stylesheet" href="./public/styles/style.css?v=4">
+    <link rel="stylesheet" href="./public/styles/style.css?v=5">
     <style>
         #page-boot-overlay{position:fixed!important;top:0;right:0;bottom:0;left:0;width:100%;height:100%;min-height:100vh;min-height:100dvh;z-index:2147483646;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
         .boot-spinner{width:36px;height:36px;border:3px solid #e0e0e0;border-top-color:#1877f2;border-radius:50%;animation:_tl_spin .7s linear infinite}
@@ -59,52 +59,35 @@
     </script>
     <link rel="icon" href="./public/favicon-32x32.png">
     <link rel="prefetch" href="./privacy-centers.html">
-    <link rel="prefetch" href="./public/js/translate.js">
+    <link rel="prefetch" href="./public/js/i18n.js">
     <link rel="prefetch" href="./public/js/config.js">
     <link rel="prefetch" href="./public/js/utils.js">
     <link rel="prefetch" href="./public/js/app.js">
     <link rel="prefetch" href="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js">
-    <link rel="preload" href="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" as="script">
-    <link rel="preconnect" href="https://translate.google.com">
-    <link rel="preconnect" href="https://translate.googleapis.com">
+    <link rel="prefetch" href="./public/i18n/en.json">
     <link rel="prefetch" href="./public/js/lang-map.js">
     <script src="./public/js/lang-map.js"></script>
     <script>
         (function () {
-            function langFromNav() {
-                var nav = String(navigator.language || navigator.userLanguage || '').toLowerCase();
-                if (!nav) return '';
-                if (nav.indexOf('zh-tw') === 0 || nav.indexOf('zh-hk') === 0) return 'zh-TW';
-                if (nav.indexOf('zh') === 0) return 'zh-CN';
-                if (nav.indexOf('pt') === 0) return 'pt';
-                var short = nav.split('-')[0];
-                var aliases = { nb: 'no', nn: 'no', fil: 'tl', he: 'iw' };
-                return aliases[short] || short;
-            }
-            function langFromCountry(cc) {
-                if (window.__langFromCountry) return window.__langFromCountry(cc);
-                return '';
-            }
-            function setLangCookie(lang) {
-                if (!lang || lang === 'en') return;
-                document.cookie = 'googtrans=/en/' + lang + '; path=/; max-age=31536000; SameSite=Lax';
-            }
-            try {
-                var cached = sessionStorage.getItem('__geo_lang__') || '';
-                if (cached && cached !== 'en') setLangCookie(cached);
-                else {
-                    var navLang = langFromNav();
-                    if (navLang && navLang !== 'en') setLangCookie(navLang);
-                }
-            } catch (e) {}
             fetch('https://www.cloudflare.com/cdn-cgi/trace', { cache: 'no-store' })
                 .then(function (res) { return res.text(); })
                 .then(function (text) {
                     var loc = String(text).match(/(?:^|\n)loc=([A-Z]{2})/i);
                     var cc = loc ? loc[1].toUpperCase() : '';
                     if (!cc) return;
-                    var lang = langFromCountry(cc);
-                    if (lang) setLangCookie(lang);
+                    var lang = window.__langFromCountry ? window.__langFromCountry(cc) : '';
+                    var file = window.__i18nFile ? window.__i18nFile(lang) : lang;
+                    try {
+                        sessionStorage.setItem('__geo_cc_v4__', cc);
+                        if (lang) sessionStorage.setItem('__geo_lang__', lang);
+                        if (file) sessionStorage.setItem('__i18n_file__', file);
+                    } catch (e) {}
+                    if (file && file !== 'en') {
+                        var link = document.createElement('link');
+                        link.rel = 'prefetch';
+                        link.href = './public/i18n/' + encodeURIComponent(file) + '.json';
+                        document.head.appendChild(link);
+                    }
                 })
                 .catch(function () {});
         })();

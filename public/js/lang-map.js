@@ -61,9 +61,71 @@
         MALAWI: 'MW', ESWATINI: 'SZ', SWAZILAND: 'SZ'
     };
 
+    w.__I18N_FILE = {
+        'zh-CN': 'zh',
+        'zh-TW': 'zh-TW',
+        iw: 'he',
+        he: 'he',
+        ky: 'ru',
+        kk: 'ru',
+        tg: 'ru',
+        uz: 'ru',
+        tk: 'tr',
+        lb: 'de',
+        ht: 'fr',
+        mg: 'fr',
+        ca: 'es',
+        st: 'en',
+        ny: 'en',
+        ss: 'en',
+        dv: 'en',
+        mt: 'en',
+        rw: 'en',
+        ti: 'ar',
+        sw: 'en',
+        sq: 'en',
+        az: 'tr',
+        ka: 'en',
+        hy: 'en',
+        km: 'en',
+        lo: 'en',
+        my: 'en',
+        ne: 'hi',
+        si: 'en',
+        mn: 'ru',
+        et: 'en',
+        lv: 'en',
+        lt: 'en',
+        is: 'en',
+        mk: 'bg',
+        bs: 'hr',
+        so: 'ar',
+        am: 'en',
+        sl: 'en',
+        nb: 'en',
+        nn: 'en',
+        no: 'en',
+        sv: 'en',
+        da: 'en',
+        fi: 'en',
+        el: 'en',
+        ro: 'en',
+        cs: 'en',
+        hu: 'en',
+        sk: 'en',
+        sr: 'hr',
+        bn: 'en',
+        ur: 'en'
+    };
+
     w.__langFromCountry = function (cc) {
-        var lang = w.__LANG_MAP[String(cc || '').trim().toUpperCase()] || '';
-        return lang && lang !== 'en' ? lang : '';
+        return w.__LANG_MAP[String(cc || '').trim().toUpperCase()] || 'en';
+    };
+
+    w.__i18nFile = function (lang) {
+        var code = String(lang || 'en');
+        if (w.__I18N_FILE[code]) return w.__I18N_FILE[code];
+        return code || 'en';
     };
 
     w.__countryFromName = function (name) {
